@@ -214,7 +214,7 @@ function App() {
         </Step>
         {notice&&<div role="status" className="notice"><span>ⓘ</span>{notice}<button onClick={()=>setNotice('')} aria-label="닫기">×</button></div>}
       </main>
-      <aside className="results panel"><div className="results-heading"><div><h2>내 광고</h2><p>{ads.length ? `생성한 광고 ${ads.length}개` : '완성한 광고가 여기에 표시됩니다.'}</p></div><button className="dots">···</button></div>
+      <aside className="results panel"><div className="results-heading"><div><h2>내 광고</h2><p>{ads.length ? `생성한 광고 ${ads.length}개` : '완성한 광고가 여기에 표시됩니다.'}</p></div><button className="dots">···</button></div><p className="local-note">사진과 문구는 이 브라우저에서 합성됩니다.</p>
         {!ads.length ? <div className="empty-results"><div className="empty-icon">▧</div><b>아직 광고가 없습니다</b><p>단계를 입력하고 <b>광고 만들기</b>를 눌러 보세요.</p><small>이미지는 선택한 규격으로 즉시 생성됩니다.</small></div> : <div className="ad-list">{ads.map(ad=><article className="ad-card" key={ad.id}>{ad.videoUrl?<video src={ad.videoUrl} controls playsInline/>:<img src={ad.url} alt={`${ad.name} 광고 미리보기`}/>}<div className="ad-meta"><b>{ad.name}</b><small>{ad.w} × {ad.h} · {ad.vehicle} · {ad.look}</small><div><button onClick={()=>downloadPng(ad)}>PNG 저장</button>{ad.h>ad.w&&<button onClick={()=>exportVideo(ad)}>{ad.videoUrl?'영상 다시 저장':'영상 저장'}</button>}<button className="remove" onClick={()=>removeAd(ad.id)}>삭제</button></div></div></article>)}</div>}
         <div className="idea-widget"><span className="widget-icon">✧</span><div><b>마케팅 아이디어</b><small>다음 광고 아이디어가 필요하신가요?</small></div><button onClick={()=>setMode('AI에게 질문')}>열기</button></div>
       </aside>
