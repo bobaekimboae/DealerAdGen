@@ -160,7 +160,7 @@ function App() {
       // captureStream must start with a non-zero surface. Resizing after starting
       // MediaRecorder can mute/reset the track in Chromium and produce a 1 s file.
       canvas.width = w; canvas.height = h;
-      const duration = 5, fps = 24, stream = canvas.captureStream(fps);
+      const duration = 6, fps = 24, stream = canvas.captureStream(fps);
       await drawAd(canvas, w, h, 0);
       const mime = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(x => MediaRecorder.isTypeSupported(x)) || '';
       const recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined); const chunks = [];
@@ -177,14 +177,14 @@ function App() {
       const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
       const videoUrl = URL.createObjectURL(blob);
       setAds(curr => curr.map(item => item.id === ad.id ? { ...item, videoUrl } : item));
-      download(videoUrl, `${safeName(ad.name)}.webm`);
-      setNotice('세로형 영상 파일을 내보냈습니다.');
+        setNotice('세로형 영상 미리보기를 준비했습니다. 영상 다운로드를 눌러 파일을 저장하세요.');
     } catch (error) { setNotice(`영상 내보내기 실패: ${error.message}`); }
     finally { setBusy(''); }
   }
   function download(url, name) { const a = document.createElement('a'); a.href = url; a.download = name; a.click(); }
   function safeName(name) { return name.toLowerCase().replace(/[^a-z0-9가-힣]+/g, '-').replace(/^-|-$/g, '') || 'dealeradgen'; }
   function downloadPng(ad) { download(ad.url, `${safeName(ad.name)}.png`); }
+    function downloadVideo(ad) { if (ad.videoUrl) { download(ad.videoUrl, `${safeName(ad.name)}.webm`); setNotice('영상 파일 다운로드를 시작했습니다.'); } }
   function removeAd(id) { setAds(curr => curr.filter(ad => ad.id !== id)); }
 
   return <div className="app-shell">
@@ -224,7 +224,7 @@ function App() {
         {notice&&<div role="status" className="notice"><span>ⓘ</span>{notice}<button onClick={()=>setNotice('')} aria-label="닫기">×</button></div>}
       </main>
       <aside className="results panel"><div className="results-heading"><div><h2>내 광고</h2><p>{ads.length ? `생성한 광고 ${ads.length}개` : '완성한 광고가 여기에 표시됩니다.'}</p></div><button className="dots">···</button></div><p className="local-note">사진과 문구는 이 브라우저에서 합성됩니다.</p>
-        {!ads.length ? <div className="empty-results"><div className="empty-icon">▧</div><b>아직 광고가 없습니다</b><p>단계를 입력하고 <b>광고 만들기</b>를 눌러 보세요.</p><small>이미지는 선택한 규격으로 즉시 생성됩니다.</small></div> : <div className="ad-list">{ads.map(ad=><article className="ad-card" key={ad.id}>{ad.videoUrl?<video src={ad.videoUrl} controls playsInline/>:<img src={ad.url} alt={`${ad.name} 광고 미리보기`}/>}<div className="ad-meta"><b>{ad.name}</b><small>{ad.w} × {ad.h} · {ad.vehicle} · {ad.look}</small><div><button onClick={()=>downloadPng(ad)}>PNG 저장</button>{ad.h>ad.w&&<button onClick={()=>exportVideo(ad)}>{ad.videoUrl?'영상 다시 저장':'영상 저장'}</button>}<button className="remove" onClick={()=>removeAd(ad.id)}>삭제</button></div></div></article>)}</div>}
+        {!ads.length ? <div className="empty-results"><div className="empty-icon">▧</div><b>아직 광고가 없습니다</b><p>단계를 입력하고 <b>광고 만들기</b>를 눌러 보세요.</p><small>이미지는 선택한 규격으로 즉시 생성됩니다.</small></div> : <div className="ad-list">{ads.map(ad=><article className="ad-card" key={ad.id}>{ad.videoUrl?<video src={ad.videoUrl} controls playsInline/>:<img src={ad.url} alt={`${ad.name} 광고 미리보기`}/>}<div className="ad-meta"><b>{ad.name}</b><small>{ad.w} × {ad.h} · {ad.vehicle} · {ad.look}</small><div><button onClick={()=>downloadPng(ad)}>PNG 저장</button>{ad.h>ad.w&&<button onClick={()=>ad.videoUrl?downloadVideo(ad):exportVideo(ad)}>{ad.videoUrl?'영상 다운로드':'영상 만들기'}</button>}<button className="remove" onClick={()=>removeAd(ad.id)}>삭제</button></div></div></article>)}</div>}
         <div className="idea-widget"><span className="widget-icon">✧</span><div><b>마케팅 아이디어</b><small>다음 광고 아이디어가 필요하신가요?</small></div><button onClick={()=>setMode('AI에게 질문')}>열기</button></div>
       </aside>
     </div>
