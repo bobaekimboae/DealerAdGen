@@ -90,7 +90,11 @@ function App() {
     setNotice('VIN을 확인했습니다. 매물 상세 사양은 정확한 정보로 직접 검수해 주세요.');
   }
   function drawAd(canvas, width, height, zoom = 0) {
-    const ctx = canvas.getContext('2d'); canvas.width = width; canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    // Resizing a canvas clears it and resets its capture track. Only resize when
+    // dimensions actually change; exportVideo redraws this canvas many times.
+    if (canvas.width !== width) canvas.width = width;
+    if (canvas.height !== height) canvas.height = height;
     const render = (img, logoImg) => {
       ctx.save();
       if (img) {
@@ -153,16 +157,21 @@ function App() {
     setBusy(`${ad.name} 영상 만드는 중…`);
     try {
       const canvas = document.createElement('canvas'); const { w, h } = ad;
+      // captureStream must start with a non-zero surface. Resizing after starting
+      // MediaRecorder can mute/reset the track in Chromium and produce a 1 s file.
+      canvas.width = w; canvas.height = h;
       const duration = 5, fps = 24, stream = canvas.captureStream(fps);
+      await drawAd(canvas, w, h, 0);
       const mime = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(x => MediaRecorder.isTypeSupported(x)) || '';
       const recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined); const chunks = [];
       recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
       const done = new Promise((resolve, reject) => { recorder.onstop = resolve; recorder.onerror = () => reject(new Error('영상 인코딩에 실패했습니다.')); });
-      recorder.start(); const started = performance.now();
+      recorder.start(250); const started = performance.now();
       const tick = async now => {
         const t = (now - started) / 1000;
         await drawAd(canvas, w, h, Math.min(1, t / duration));
-        if (t < duration) requestAnimationFrame(tick); else recorder.stop();
+        if (t < duration) requestAnimationFrame(tick);
+        else recorder.stop();
       };
       requestAnimationFrame(tick); await done;
       const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
